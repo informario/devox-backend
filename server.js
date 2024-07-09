@@ -8,52 +8,70 @@ app.use(cors())
 //PORT
 const port = 3000
 app.listen(port, () => {
-    console.log(`Example app listening on port ${port}`)
+    console.log(`app listening on port ${port}`)
 })
 //BODYPARSER
 let bodyParser = require('body-parser')
 midware = bodyParser.urlencoded({extended: false})
 app.use(bodyParser.json());
 
-
-//ESTRUCTURAS DE DATOS//
-
-class Paragraph {
-    constructor(title, author, content, id){
-        this.title = title
-        this.author = author
-        this.content = content
-        this.id = id
-    }
-}
-let paragraphs = []
+//DATABASE//
+const mongoose = require('mongoose')
+const { Schema } = mongoose;
+mongoose.connect(process.env.MONGO_URI)
+const paragraphSchema = new Schema({
+    title: String, // String is shorthand for {type: String}
+    author: String,
+    content: String,
+    id: Number,
+});
+const Paragraph = mongoose.model('paragraphs', paragraphSchema);
 
 //FUNCIONES//
 
-addParagraph = function(req,res){
-    let parrafoNuevo = new Paragraph(req.body.title, req.body.author, req.body.content, req.body.id)
-    paragraphs.push(parrafoNuevo)
-    res.sendStatus(200)
-    console.log(paragraphs)
+addParagraph = async function (req, res) {
+    let parrafoNuevo = new Paragraph({
+        title: req.body.title,
+        author: req.body.author,
+        content: req.body.content,
+        id: parseInt(req.body.id)
+    })
+    await parrafoNuevo.save().then( () => {
+        res.sendStatus(200)
+    })
+    .catch((error) => {
+        console.log(error)
+    })
+
 }
 
 //ENDPOINTS//
-app.get('/fetch', (req, res) => {
-    let data = JSON.stringify(paragraphs)
-    res.json(data)
+app.get('/fetch', async (req, res) => {
+    await Paragraph.find()
+        .then( docs => {
+            let array = []
+            for (let doc of docs) {
+                array.push(doc.toObject())
+            }
+            let data = JSON.stringify(array)
+            res.json(data);
+        })
+        .catch((error) => {
+            console.log(error)
+        })
 })
 
 app.get('/', (req, res) => {
     res.send('hello world')
 })
+
 app.post('/push', midware, addParagraph)
 
-app.delete('/remove', (req, res) => {
-    const id = req.query.id
-    paragraphs = paragraphs.filter(
-        (t) => t.id != id
-    )
-    console.log(paragraphs)
+app.delete('/remove', async (req, res) => {
+    const received_id = parseInt(req.query.id)
+    const result = await Paragraph.deleteMany({id:received_id})
+    console.log(result)
     res.sendStatus(200)
+
 
 })
