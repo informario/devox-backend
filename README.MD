@@ -1,7 +1,7 @@
 devox-backend
 
 ### Configurar variables de entorno
-####/.env:
+#### /.env:
 ```
 MONGO_URI=<enlace correspondiente a la bd>
 ```
