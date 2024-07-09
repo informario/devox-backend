@@ -1,10 +1,10 @@
 devox-backend
 
-###Configurar variables de entorno
+### Configurar variables de entorno
 /.env:
 MONGO_URI=<enlace correspondiente a la bd>
 
-###Dependencias:
+### Dependencias:
 mongoose@8.5.0
 express
 dotenv
