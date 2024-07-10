@@ -1,93 +1,93 @@
 //SETUP//
 
-{
-    let express = require('express')
-    require('dotenv').config()
-    let app = express()
+
+let express = require('express')
+require('dotenv').config()
+let app = express()
 //CORS
-    const cors = require('cors')
-    app.use(cors())
+const cors = require('cors')
+app.use(cors())
 //PORT
-    const port = 3000
-    app.listen(port, () => {
-        console.log(`app listening on port ${port}`)
-    })
+const port = 3000
+app.listen(port, () => {
+    console.log(`app listening on port ${port}`)
+})
 //BODYPARSER
-    let bodyParser = require('body-parser')
-    midware = bodyParser.urlencoded({extended: false})
-    app.use(bodyParser.json());
+let bodyParser = require('body-parser')
+midware = bodyParser.urlencoded({extended: false})
+app.use(bodyParser.json());
 
 //DATABASE//
-    const mongoose = require('mongoose')
-    const {Schema} = mongoose;
-    mongoose.connect(process.env.MONGO_URI)
-    const paragraphSchema = new Schema({
-        title: String, // String is shorthand for {type: String}
-        author: String,
-        content: String,
-        id: Number,
-    });
-    const Paragraph = mongoose.model('paragraphs', paragraphSchema);
+const mongoose = require('mongoose')
+const {Schema} = mongoose;
+mongoose.connect(process.env.MONGO_URI)
+const paragraphSchema = new Schema({
+    title: String, // String is shorthand for {type: String}
+    author: String,
+    content: String,
+    id: Number,
+});
+const Paragraph = mongoose.model('paragraphs', paragraphSchema);
 
-    const getMaxId = async () => {
-        try {
-            const maxIdParagraph = await Paragraph.findOne({}, null, {sort: {id: -1}})
-            max_id = maxIdParagraph.id
+const getMaxId = async () => {
+    try {
+        const maxIdParagraph = await Paragraph.findOne({}, null, {sort: {id: -1}})
+        max_id = maxIdParagraph.id
 
-        } catch (error) {
-            console.log(error)
-        }
-    };
-}
+    } catch (error) {
+        console.log(error)
+    }
+};
+
 
 //FUNCIONES//
 
-{
-    addParagraph = async function (req, res) {
-        let parrafoNuevo = new Paragraph({
-            title: req.body.title,
-            author: req.body.author,
-            content: req.body.content,
-            id: getMaxId()+1
-        })
-        max_id++
-        await parrafoNuevo.save().then( () => {
-            res.sendStatus(200)
-        })
-            .catch((error) => {
-                console.log(error)
-            })
 
-    }
+addParagraph = async function (req, res) {
+    let parrafoNuevo = new Paragraph({
+        title: req.body.title,
+        author: req.body.author,
+        content: req.body.content,
+        id: getMaxId()+1
+    })
+    max_id++
+    await parrafoNuevo.save().then( () => {
+        res.sendStatus(200)
+    })
+        .catch((error) => {
+            console.log(error)
+        })
+
 }
+
 
 //ENDPOINTS//
 
-{
-    app.get('/fetch', async (req, res) => {
-        await Paragraph.find()
-            .then( docs => {
-                let array = []
-                for (let doc of docs) {
-                    array.push(doc.toObject())
-                }
-                let data = JSON.stringify(array)
-                res.json(data);
-            })
-            .catch((error) => {
-                console.log(error)
-            })
-    })
 
-    app.get('/', (req, res) => {
-        res.send('hello world')
-    })
+app.get('/fetch', async (req, res) => {
+    await Paragraph.find()
+        .then( docs => {
+            let array = []
+            for (let doc of docs) {
+                array.push(doc.toObject())
+            }
+            let data = JSON.stringify(array)
+            res.json(data);
+        })
+        .catch((error) => {
+            console.log(error)
+        })
+})
 
-    app.post('/push', midware, addParagraph)
+app.get('/', (req, res) => {
+    res.send('hello world')
+})
 
-    app.delete('/remove', async (req, res) => {
-        const received_id = parseInt(req.query.id)
-        const result = await Paragraph.deleteMany({id:received_id})
-        res.sendStatus(200)
-    })
-}
+app.post('/push', midware, addParagraph)
+
+app.delete('/remove', async (req, res) => {
+    const received_id = parseInt(req.query.id)
+    const result = await Paragraph.deleteMany({id:received_id})
+    res.sendStatus(200)
+})
+
