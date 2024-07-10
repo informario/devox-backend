@@ -44,8 +44,11 @@ const getMaxId = async () => {
 
 
 addParagraph = async function (req, res) {
-    const id = await getMaxId()
-        .then()
+    let id
+    await getMaxId()
+        .then((maxId) => {
+            id = maxId+1
+        })
         .catch((error) =>{
             console.error(error)
             return res.status(500).send({error: error.message})
