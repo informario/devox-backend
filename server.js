@@ -32,7 +32,7 @@ const Paragraph = mongoose.model('paragraphs', paragraphSchema);
 const getMaxId = async () => {
     try {
         const maxIdParagraph = await Paragraph.findOne({}, null, {sort: {id: -1}})
-        max_id = maxIdParagraph.id
+        return maxIdParagraph.id
 
     } catch (error) {
         console.log(error)
@@ -44,13 +44,18 @@ const getMaxId = async () => {
 
 
 addParagraph = async function (req, res) {
+    const id = await getMaxId()
+        .then()
+        .catch((error) =>{
+            console.error(error)
+            return res.status(500).send({error: error.message})
+        })
     let parrafoNuevo = new Paragraph({
         title: req.body.title,
         author: req.body.author,
         content: req.body.content,
-        id: getMaxId()+1
+        id: id
     })
-    max_id++
     await parrafoNuevo.save().then( () => {
         res.sendStatus(200)
     })
