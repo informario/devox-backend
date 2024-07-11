@@ -30,7 +30,6 @@ const jwt = require("jsonwebtoken")
 
 
 
-
 /////////////////////////BLOG/////////////////////////
 const paragraphSchema = new Schema({
     title: String, // String is shorthand for {type: String}
@@ -52,9 +51,6 @@ const getMaxId = async function () {
 
 addParagraph = async function (req, res) {
     let id
-    console.log(req.body.title)
-    console.log(req.user.username)
-    console.log(req.body.content)
     await getMaxId()
         .then((maxId) => {
             id = maxId+1
@@ -78,7 +74,7 @@ addParagraph = async function (req, res) {
         })
 
 }
-app.get('/fetch',authenticateToken, async (req, res) => {
+app.get('/fetch', authenticateToken, async (req, res) => {
     await Paragraph.find()
         .then( docs => {
             let array = []
@@ -94,14 +90,13 @@ app.get('/fetch',authenticateToken, async (req, res) => {
 })
 
 app.get('/', authenticateToken, (req, res) => {
-    console.log(req.user)
     res.send('hello world')
 })
 
 app.post('/push', midware, authenticateToken, addParagraph)
 
-app.delete('/remove', authenticateToken, async (req, res) => {
-    const received_id = parseInt(req.query.id)
+app.post('/remove', authenticateToken, async (req, res) => {
+    const received_id = parseInt(req.body.id)
     const result = await Paragraph.deleteMany({id:received_id, author:req.user.username})
     res.sendStatus(200)
 })
@@ -117,7 +112,10 @@ app.delete('/remove', authenticateToken, async (req, res) => {
 
 const credenciales_validas = async function(username, password){
     const foundUser = await User.findOne({username:username})
-    if (foundUser.hash==null) {
+    if (foundUser==null) {
+        return false
+    }
+    else if(foundUser.hash==null){
         return false
     }
     return bcrypt.compareSync(password, foundUser.hash);
@@ -162,7 +160,7 @@ const addNewUser = async function (req, res) {
     if(await isUsernameInUse(req.body.username)){
         return res.status(409).send({error: "Username ya en uso"})
     }
-    if(await isEmailInUse(req.body.username)){
+    if(await isEmailInUse(req.body.email)){
         return res.status(409).send({error: "Email ya en uso"})
     }
     const salt = bcrypt.genSaltSync(10);
@@ -191,3 +189,5 @@ app.post('/login', async (req, res) =>{
     const accessToken = jwt.sign({username: req.body.username, password: req.body.password}, process.env.ACCESS_TOKEN_SECRET, { expiresIn: 20000 })
     res.json({accessToken: accessToken})
 })
+
+
