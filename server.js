@@ -26,8 +26,22 @@ mongoose.connect(process.env.MONGO_URI)
 const jwt = require("jsonwebtoken")
 const { hasUncaughtExceptionCaptureCallback } = require('process')
 
+//SPINDOWN FIX//
+const url = 'https://devox-backend.onrender.com';
 
+const interval = 300000;
 
+function reloadWebsite() {
+  axios.get(url)
+    .then(response => {
+      console.log(`Reloaded at ${new Date().toISOString()}: Status Code ${response.status}`);
+    })
+    .catch(error => {
+      console.error(`Error reloading at ${new Date().toISOString()}:`, error.message);
+    });
+}
+
+setInterval(reloadWebsite, interval);
 
 
 
