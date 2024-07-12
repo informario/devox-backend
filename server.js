@@ -24,6 +24,7 @@ mongoose.connect(process.env.MONGO_URI)
 
 //AUTH//
 const jwt = require("jsonwebtoken")
+const { hasUncaughtExceptionCaptureCallback } = require('process')
 
 
 
@@ -36,6 +37,7 @@ const paragraphSchema = new Schema({
     author: String,
     content: String,
     id: Number,
+    likes: Array
 });
 const Paragraph = mongoose.model('paragraphs', paragraphSchema);
 
@@ -101,8 +103,42 @@ app.post('/remove', authenticateToken, async (req, res) => {
     res.sendStatus(200)
 })
 
+app.post('/getlikes',midware,authenticateToken, async (req, res) =>{
+    const received_id = req.body.id
+    await Paragraph.aggregate([{$match:{id:received_id}}, {$project:{likesize:{$size:"$likes"}}}])
+    .then(h => {
+        return res.json({value:h[0].likesize})
+    })
+    .catch(error =>{
+        return res.sendStatus(404)
+    }
+    )
+})
 
-
+app.post('/togglelike', midware, authenticateToken, async(req, res) =>{
+    //console.log("username: "+req.body.username+" id: "+req.body.id)
+    await Paragraph.findOne({id:req.body.id, likes:{$in: [req.body.username]}})
+    .then(async h => {
+        if(h==null){
+            await Paragraph.updateOne(
+                {id: req.body.id},
+                { $addToSet:{likes:req.body.username}}
+            ).then().catch(error1=>{console.log("error1: "+ error1)})
+        }
+        else{
+            await Paragraph.updateOne(
+                {id: req.body.id},
+                { $pull:{likes:req.body.username}}
+            ).then().catch(error2=>{console.log("error2: "+ error2)})
+        }
+        //console.log("success")
+        return res.sendStatus(200)
+    })
+    .catch(error =>{
+        console.log(error)
+        return res.sendStatus(404)
+    })
+})
 
 
 
@@ -126,6 +162,7 @@ function authenticateToken(req, res, next){
     const authHeader = req.headers['authorization']
     const token = authHeader && authHeader.split(' ')[1]
     if (token==null){
+        console.log(req.headers)
         return res.sendStatus(401)
     }
     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err,user) =>{
@@ -163,8 +200,7 @@ const addNewUser = async function (req, res) {
     if(await isEmailInUse(req.body.email)){
         return res.status(409).send({error: "Email ya en uso"})
     }
-    const salt = bcrypt.genSaltSync(10);
-    const hash = bcrypt.hashSync(req.body.password, salt);
+    const hash = bcrypt.hashSync(req.body.password, 10);
 
     let usernNuevo = new User({
         email: req.body.email,
@@ -189,5 +225,3 @@ app.post('/login', async (req, res) =>{
     const accessToken = jwt.sign({username: req.body.username, password: req.body.password}, process.env.ACCESS_TOKEN_SECRET, { expiresIn: 20000 })
     res.json({accessToken: accessToken})
 })
-
-
