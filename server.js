@@ -27,9 +27,10 @@ const jwt = require("jsonwebtoken")
 const { hasUncaughtExceptionCaptureCallback } = require('process')
 
 //SPINDOWN FIX//
-const url = 'https://devox-backend.onrender.com';
-
-const interval = 300000;
+//const url = 'https://devox-backend.onrender.com';
+const url = 'http://localhost:3000'
+const axios = require("axios")
+const interval = 3000;
 
 function reloadWebsite() {
   axios.get(url)
@@ -105,7 +106,7 @@ app.get('/fetch', authenticateToken, async (req, res) => {
         })
 })
 
-app.get('/', authenticateToken, (req, res) => {
+app.get('/', (req, res) => {
     res.send('hello world')
 })
 
