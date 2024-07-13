@@ -30,7 +30,7 @@ const { hasUncaughtExceptionCaptureCallback } = require('process')
 //const url = 'https://devox-backend.onrender.com';
 const url = 'http://localhost:3000'
 const axios = require("axios")
-const interval = 3000;
+const interval = 300000;
 
 function reloadWebsite() {
   axios.get(url)
