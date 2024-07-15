@@ -24,26 +24,6 @@ mongoose.connect(process.env.MONGO_URI)
 
 //AUTH//
 const jwt = require("jsonwebtoken")
-const { hasUncaughtExceptionCaptureCallback } = require('process')
-
-//SPINDOWN FIX//
-const url = 'https://devox-backend.onrender.com';
-//const url = 'http://localhost:3000'
-const axios = require("axios")
-const interval = 300000;
-
-function reloadWebsite() {
-  axios.get(url)
-    .then(response => {
-      console.log(`Reloaded at ${new Date().toISOString()}: Status Code ${response.status}`);
-    })
-    .catch(error => {
-      console.error(`Error reloading at ${new Date().toISOString()}:`, error.message);
-    });
-}
-
-setInterval(reloadWebsite, interval);
-
 
 
 /////////////////////////BLOG/////////////////////////
@@ -114,8 +94,24 @@ app.post('/push', midware, authenticateToken, addParagraph)
 
 app.post('/remove', authenticateToken, async (req, res) => {
     const received_id = parseInt(req.body.id)
-    const result = await Paragraph.deleteMany({id:received_id, author:req.user.username})
-    res.sendStatus(200)
+    const result = await Paragraph.findOne({id:received_id})
+    //author:req.user.username
+    if (result == null || result.author === undefined) {
+        res.sendStatus(404)
+    }
+    else if (result.author !== req.user.username){
+        res.status(200).send("notauth")
+    }
+    else{
+        await Paragraph.deleteOne({_id:result._id})
+            .then(_=>{
+                res.sendStatus(200)
+            })
+            .catch(_=>{
+                res.sendStatus(500)
+            })
+
+    }
 })
 
 app.post('/getlikes',midware,authenticateToken, async (req, res) =>{
